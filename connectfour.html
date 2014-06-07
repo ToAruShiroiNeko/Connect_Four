@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="tempProject.css">
+</head><title>Connect four</title>
+<body>
+
+<h1>Connect Four</h1>
+<p><a href="https://en.wikipedia.org/wiki/Connect_Four">Connect four</a> is a two-player connection game in which the objective is to connect four of own discs eithe horizontaly, vertically or diagonally. Traditionally connect four is played on a 6 high 7 wide grid.</p>
+<button id="btnStartGame" onclick="btnCreateNewBoard()">Start New Game</button>
+<h2 id="gameStatus">Press start new game button to start a new game</h2>
+<p id="gameMessage"></p>
+<div id="divBoard"></div>
+<p id="debugMessage"></p>
+<p id="debugMessage2"></p>
+
+<script>
+var gameTurn = 0;
+var gameBoard;
+var gameOn = true;
+
+//Button to initilize the board & to check for valid input to textboxes
+function btnCreateNewBoard() {
+  gameTurn=0;
+  gameOn=true;
+  height=6;
+  width=7;
+  if (!((height > 5) && (height < 10))) {
+    height=6;
+    document.getElementById("txtHeight").value = "6";
+  }
+  if (!((width > 6) && (width < 10))) {
+    width=7;
+    document.getElementById("txtWidth").value="7";
+  }
+  createBoard(height, width);
+  printBoard(gameBoard);
+  document.getElementById("gameStatus").innerHTML = "New game started! It is yellow player's turn!";
+  document.getElementById("gameMessage").innerHTML = "Please click on a column to place your disk.";
+}
+
+//Button to play a turn
+function btnPlayTurn(gameCol) {
+  if (gameOn) {
+    tmpGameCol = parseInt(gameCol);
+    placeDisc(tmpGameCol);
+  }
+}
+
+//Game action
+function placeDisc(gameCol) {
+  gameTurn++;
+  if(gameTurn % 2 == 0) {//even red (2)
+    discVal = 2;
+  }
+  else {//odd yellow (1)
+    discVal = 1;
+  }
+  var isPlay = true;  
+  for (var i = (gameBoard.length - 1); i > -1 ; i--) {
+    if ((gameBoard[gameCol][i] == 0) && isPlay) {
+      gameBoard[gameCol][i] = discVal;
+      isPlay = false;
+    }
+  }
+  if (isPlay) {
+    document.getElementById("gameMessage").innerHTML = "That column is full, please click on a different column to place your disk.";
+    gameTurn--;
+  }
+  else {
+    document.getElementById("gameMessage").innerHTML = "Please click on a column to place your disk.";
+    if(gameTurn % 2 == 0) {//even red (2)
+      nextside = "yellow";
+      gameStatusUpdate(2);//check for impact of red move
+    }
+    else {//odd yellow (1)
+      nextside = "red";
+      gameStatusUpdate(1);//check for impact of yellow move
+    }
+    if (gameOn) {
+      remainingTurns = (gameBoard.length * gameBoard[0].length) - gameTurn;
+      document.getElementById("gameStatus").innerHTML = remainingTurns.toString() + " turns remaining. It is " + nextside + " player's turn!";      
+    }
+  }
+  printBoard();
+}
+
+//Game logic (determines win/draw) also disables buttons on full columns
+function gameStatusUpdate(gameSide) {
+  checkCount = 0;
+  if (gameSide == 1)
+  {
+    gameSideName = "Yellow";
+  }
+  else if (gameSide == 2)
+  {
+    gameSideName = "Red";
+  }
+  //Verticle
+  if (gameOn) {
+    for (var i = 0; i < gameBoard.length; i++) {
+      for (var j = (gameBoard[i].length - 1); j > -1; j--) {
+        if (j == (gameBoard[i].length - 1)) {
+          checkCount = 0;
+        }
+        if (gameBoard[i][j] == gameSide) {
+          checkCount++;
+          if (checkCount > 3)
+          {
+            gameOn = false;
+            document.getElementById("gameStatus").innerHTML = "Game over! " + gameSideName + " player has won!";
+            document.getElementById("gameMessage").innerHTML = "Please click new game to start a new game.";
+          }
+        }
+        else {
+          checkCount = 0;
+        }
+      }
+    }
+  }
+  //Horizontal
+  if (gameOn) {
+    for (var j = (gameBoard[0].length - 1); j > -1; j--) {
+      for (var i = 0; i < gameBoard.length; i++) {
+        if (gameBoard[i][j] == gameSide) {
+          checkCount++;
+          if (checkCount > 3)
+          {
+            gameOn = false;
+            document.getElementById("gameStatus").innerHTML = "Game over! " + gameSideName + " player has won!";
+            document.getElementById("gameMessage").innerHTML = "Please click new game to start a new game.";
+          }
+        }
+        else {
+          checkCount = 0;
+        }
+      }
+    }
+  }
+  //Diagonal
+  if (gameOn) {
+    for (var j = (gameBoard[0].length - 1); j > -1; j--) {
+      for (var i = 0; i < gameBoard.length; i++) {
+        if (gameBoard[i][j] == gameSide) {
+          checkCount = 1;
+          for (var k = 1; ((k < 4) && ((i+k) < gameBoard.length) && ((j-k) > -1)); k++) {
+            if (gameBoard[(i+k)][(j-k)] == gameSide) {
+              checkCount++;
+              if (checkCount > 3)
+              {
+                gameOn = false;
+                document.getElementById("gameStatus").innerHTML = "Game over! " + gameSideName + " player has won!";
+                document.getElementById("gameMessage").innerHTML = "Please click new game to start a new game.";
+              }
+            }
+            else
+            {
+              checkCount = 0;
+            }
+          }
+          checkCount = 1;
+          for (var k = 1; ((k < 4) && ((i-k) > -1) && ((j-k) > -1)); k++) {
+            if (gameBoard[(i-k)][(j-k)] == gameSide) {
+              checkCount++;
+              if (checkCount > 3)
+              {
+                gameOn = false;
+                document.getElementById("gameStatus").innerHTML = "Game over! " + gameSideName + " player has won!";
+                document.getElementById("gameMessage").innerHTML = "Please click new game to start a new game.";
+              }
+            }
+            else
+            {
+              checkCount = 0;
+            }
+          }
+        }
+        else {
+          checkCount = 0;
+        }
+      }
+    }
+  }
+  //Check for draw
+  if (((gameBoard.length * gameBoard[0].length) < (gameTurn + 1)) && (gameOn)) {
+    document.getElementById("gameStatus").innerHTML = "Game over! It is a draw!";
+    gameOn = false;
+  }
+  return 0
+}
+
+//Initilizes the board starting the new game or reseting the game
+function createBoard(height, width) {
+  document.getElementById("divBoard").style.backgroundColor = 'blue';
+  document.getElementById("divBoard").style.textAlign='center';
+  newWidth=(width*50)+50;
+  document.getElementById("divBoard").style.width= newWidth.toString()+"px";//normally (7*50)+50=400px
+  gameBoard = [];
+  gameBoard = new Array(width);
+  for (var i = 0; i < width; i++) {
+    gameBoard[i] = new Array(height);
+    for (var j = 0; j < height; j++) {
+      gameBoard[i][j] = 0;
+    tmpcheck1 = j;
+    }
+    tmpcheck2 = i;
+  }
+  return 0;
+}
+
+//(Re)Draws the board
+function printBoard() {
+  tmpString = "<br/>";
+  for (var i = 0; i < gameBoard[i].length; i++) {
+    for (var j = 0; j < gameBoard.length; j++) {
+      if (gameBoard[j][i] == 0) {
+        tmpString = tmpString + "<img src=empty.png onclick=btnPlayTurn(" + j.toString() + ")>";
+      }
+      else if (gameBoard[j][i] == 1) {
+        tmpString = tmpString + "<img src=yellow.png onclick=btnPlayTurn(" + j.toString() + ")>";
+      }
+      else if (gameBoard[j][i] == 2) {
+        tmpString = tmpString + "<img src=red.png onclick=btnPlayTurn(" + j.toString() + ")>";
+      }
+    }
+    tmpString = tmpString + "<br/>";
+  }
+  document.getElementById("divBoard").innerHTML = tmpString;
+  return 0;
+}
+</script>
+</body>
+</html>
